@@ -1,4 +1,4 @@
-__authors__ = '1707361'
+__authors__ = ["1707361"]
 __group__ = '87'
 
 import numpy as np
@@ -9,11 +9,12 @@ from scipy.spatial.distance import cdist
 
 class KNN:
     def __init__(self, train_data, labels):
-        self._init_train(train_data)
         self.labels = np.array(labels)
         #############################################################
         ##  THIS FUNCTION CAN BE MODIFIED FROM THIS POINT, if needed
         #############################################################
+        self.train_data = self._init_train(train_data)
+        self.neighbors = None
 
     def _init_train(self, train_data):
         """
@@ -25,7 +26,9 @@ class KNN:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        self.train_data = np.random.randint(8, size=[10, 4800])
+        P = train_data.shape[0]
+        return train_data.reshape(P, 80*60).astype(float)
+        
 
     def get_k_neighbours(self, test_data, k):
         """
@@ -39,7 +42,20 @@ class KNN:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        self.neighbors = np.random.randint(k, size=[test_data.shape[0], k])
+        N = test_data.shape[0]
+        test_data_reshaped = test_data.reshape(N, 80*60).astype(float)
+        
+        list_top_k = [] #list to store top k labels for each object
+        dist = cdist(test_data_reshaped, self.train_data, metric='euclidean') #calculate euclidean dist to every train point from every test point
+        for row in dist:
+            top_k_index = np.argsort(row)[:k] #get indexs from top k lower distances for each test point
+            top_k_labels = [self.labels[i] for i in top_k_index] #get the equivalent label of each index
+            list_top_k.append(top_k_labels) #append top k labels from each point to the matrix
+        self.neighbors = list_top_k
+
+                
+
+
 
     def get_class(self):
         """
@@ -51,7 +67,17 @@ class KNN:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        return np.random.randint(10, size=self.neighbors.size), np.random.random(self.neighbors.size)
+        topValues = []
+        for row in self.neighbors:
+            valueDic = {} #dict to store how many each value appears for very obj in test_data
+            for value in row:
+                if value in valueDic:
+                    valueDic[value]+=1 #if the value already appeared we increase counter by one
+                else:
+                    valueDic[value] = 1 #otherwise the counter is set to one
+            key_max = max(valueDic, key=valueDic.get) #we get the value with the max counter
+            topValues.append(key_max) #we append the value (label) with the max counter for each obj
+        return np.array(topValues)
 
     def predict(self, test_data, k):
         """
