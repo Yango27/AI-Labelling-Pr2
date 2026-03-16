@@ -9,6 +9,6 @@ if __name__ == "__main__":
     knn.get_k_neighbours(np.array([test_imgs_grayscale[4]]), 7)
     print(knn.neighbors)
 
-    test_imgs_grayscale = read_one_img("./images/test/vestidotestresize.jpg", 60, 80, False)
-    knn.get_k_neighbours(np.array([test_imgs_grayscale]), 10)
+    test_imgs_grayscale = read_one_img("./images/test/1670.jpg", 60, 80, False)
+    knn.get_k_neighbours(np.array([test_imgs_grayscale]), 7)
     print(knn.neighbors)
