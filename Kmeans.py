@@ -1,8 +1,9 @@
-__authors__ = 'TO_BE_FILLED'
-__group__ = 'TO_BE_FILLED'
+__authors__ = ["1707361"]
+__group__ = '87'
 
 import numpy as np
 import utils
+import random
 
 
 class KMeans:
@@ -34,7 +35,13 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        self.X = np.random.rand(100, 5)
+        X = np.array(X)
+        if X.ndim > 2:
+            X = X.reshape(-1, X.shape[-1]).astype(float)
+        self.X = X.astype(float)
+        
+        
+            
 
     def _init_options(self, options=None):
         """
@@ -71,12 +78,31 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        if self.options['km_init'].lower() == 'first':
-            self.centroids = np.random.rand(self.K, self.X.shape[1])
-            self.old_centroids = np.random.rand(self.K, self.X.shape[1])
-        else:
-            self.centroids = np.random.rand(self.K, self.X.shape[1])
-            self.old_centroids = np.random.rand(self.K, self.X.shape[1])
+        
+        if self.options['km_init'] == 'first':
+            centroids = []
+            for points in self.X:
+                added = False
+                for c in centroids:
+                    if np.array_equal(points, c):
+                        added = True
+                if not added:
+                    centroids.append(points)
+                if len(centroids) >= self.K:
+                    break
+            self.centroids = np.array(centroids)
+            
+        elif self.options['km_init'] == 'random':
+            self.centroids = np.array(random.sample(list(self.X), self.K))
+
+        elif self.options['km_init'].lower() == 'custom':
+            min_vals = np.min(self.X, axis=0)
+            max_vals = np.max(self.X, axis=0)
+            self.centroids = np.linspace(min_vals, max_vals, self.K)
+
+        self.old_centroids = np.zeros_like(self.centroids)
+
+
 
     def get_labels(self):
         """
@@ -86,7 +112,12 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        self.labels = np.random.randint(self.K, size=self.X.shape[0])
+        distances = distance(self.X, self.centroids)
+        labels = []
+        for d in distances:
+            indexC = np.argmin(d)
+            labels.append(indexC)
+        self.labels = np.array(labels)
 
     def get_centroids(self):
         """
@@ -96,7 +127,18 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        pass
+        self.old_centroids = self.centroids.copy()
+
+        auxCentroids = np.zeros((self.K, self.X.shape[-1]))
+        numPoints = np.zeros(self.K)
+        for i, points in enumerate(self.labels):
+            auxCentroids[points] += self.X[i]
+            numPoints[points] += 1
+        
+        numPoints[numPoints == 0] = 1
+        self.centroids = auxCentroids / numPoints[:, None]
+        
+
 
     def converges(self):
         """
@@ -106,7 +148,8 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        return True
+        diff = np.array(self.centroids - self.old_centroids)
+        return np.all(np.linalg.norm(diff, axis=1) <= self.options['tolerance'])
 
     def fit(self):
         """
@@ -117,7 +160,16 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        pass
+        self._init_centroids()
+        self.num_iter = 0
+    
+        while self.num_iter < self.options['max_iter']:
+            self.get_labels()
+            self.get_centroids()
+            self.num_iter += 1
+
+            if self.converges():
+                break
 
     def withinClassDistance(self):
         """
@@ -128,7 +180,14 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        pass
+        sumDist = 0
+        dist = distance(self.X, self.centroids)
+        for d in dist:
+            sumDist += np.min(d) ** 2
+        return sumDist / len(self.X) 
+    
+        
+
 
     def find_bestK(self, max_K):
         """
@@ -138,7 +197,23 @@ class KMeans:
         ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
         ##  AND CHANGE FOR YOUR OWN CODE
         #######################################################
-        pass
+        km = KMeans(self.X, 1, self.options)
+        km.fit()
+        prevWCD = km.withinClassDistance()
+        found = False
+        for i in range(max_K - 1):
+            km = KMeans(self.X, i + 2, self.options)
+            km.fit()
+            actualWCD = km.withinClassDistance()
+            if (100 - 100 * actualWCD / prevWCD < 20):
+                found = True
+                self.K = i + 1
+                break
+            prevWCD = actualWCD
+
+        if not found: 
+            self.K = max_K
+
 
 
 def distance(X, C):
@@ -157,7 +232,16 @@ def distance(X, C):
     ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
     ##  AND CHANGE FOR YOUR OWN CODE
     #########################################################
-    return np.random.rand(X.shape[0], C.shape[0])
+    
+    dist = np.zeros((X.shape[0], C.shape[0]))
+
+    for i in range(X.shape[0]):
+        for j in range(C.shape[0]):
+            dist[i, j] = np.linalg.norm(X[i] - C[j])
+    return dist
+            
+
+
 
 
 def get_colors(centroids):
@@ -174,4 +258,7 @@ def get_colors(centroids):
     ##  YOU MUST REMOVE THE REST OF THE CODE OF THIS FUNCTION
     ##  AND CHANGE FOR YOUR OWN CODE
     #########################################################
-    return list(utils.colors)
+    probs = utils.get_color_prob(centroids)
+    index = np.argmax(probs, axis=1)
+    colors = [utils.colors[i] for i in index]
+    return colors
