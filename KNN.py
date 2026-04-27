@@ -51,7 +51,7 @@ class KNN:
             top_k_index = np.argsort(row)[:k] #get indexs from top k lower distances for each test point
             top_k_labels = [self.labels[i] for i in top_k_index] #get the equivalent label of each index
             list_top_k.append(top_k_labels) #append top k labels from each point to the matrix
-        self.neighbors = list_top_k
+        self.neighbors = np.array(list_top_k)
 
                 
 
