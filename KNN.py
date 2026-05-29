@@ -1,4 +1,4 @@
-__authors__ = ["1707361"]
+__authors__ = ["1707361","1709928", "1711116"]
 __group__ = '87'
 
 import numpy as np
@@ -154,6 +154,25 @@ class KNN:
             key_max = max(valueDic, key=valueDic.get) #we get the value with the max counter
             topValues.append(key_max) #we append the value (label) with the max counter for each obj
         return np.array(topValues)
+    
+    def get_class_prob(self, k):
+    #same as get_class but we also return the percentage of the most voted class for each object in test_data
+        topValues = []
+        topProbs  = []
+        for row in self.neighbors:
+            valueDic = {}
+            for value in row:
+                if value in valueDic:
+                    valueDic[value] += 1
+                else:
+                    valueDic[value] = 1
+
+            key_max = max(valueDic, key=valueDic.get)
+            porcentaje = valueDic[key_max] / k
+            topValues.append(key_max)
+            topProbs.append(porcentaje)
+
+        return np.array(topValues), np.array(topProbs)    
 
     def predict(self, test_data, k):
         """
@@ -164,4 +183,4 @@ class KNN:
         """
         test_data = self._init_train(test_data)
         self.get_k_neighbours(test_data, k)
-        return self.get_class()
+        return self.get_class_prob(k)

@@ -1,4 +1,4 @@
-__authors__ = ["1707361"]
+__authors__ = ["1707361","1709928", "1711116"]
 __group__ = '87'
 
 import numpy as np
